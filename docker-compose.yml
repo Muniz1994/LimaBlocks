@@ -1,0 +1,50 @@
+services:
+  api:
+    build: ./lima-backend
+    image: limablocks-api
+    container_name: limablocks-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Under DEBUG Django only serves localhost unless told otherwise; "api"
+      # lets other containers reach it by service name.
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,[::1],api,0.0.0.0"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      # Source mounted for live reload. The SQLite db and MEDIA_ROOT live under
+      # lima-backend/limaBackend/, so both persist on the host through this mount.
+      - ./lima-backend:/app
+      # Keep the host's Windows venv out of the container.
+      - /app/venv
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    build: ./lima-frontend-js
+    image: limablocks-web
+    container_name: limablocks-web
+    ports:
+      - "3000:3000"
+    environment:
+      # Resolved in the browser, so it points at the published host port.
+      REACT_APP_API_ROOT: "http://127.0.0.1:8000/api/"
+      REACT_APP_CLIENT_ROOT: "http://localhost:3000"
+      # Bind mounts do not deliver inotify events on Windows/macOS hosts.
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./lima-frontend-js:/app
+      # Anonymous volume keeps the container's Linux-built node_modules instead
+      # of the host's.
+      - /app/node_modules
+    depends_on:
+      - api
+    stdin_open: true
+    tty: true

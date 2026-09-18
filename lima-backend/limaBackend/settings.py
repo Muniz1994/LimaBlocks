@@ -28,7 +28,10 @@ SECRET_KEY = DJANGO_SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Empty by default, which under DEBUG lets Django serve localhost only.
+# Containers set DJANGO_ALLOWED_HOSTS so the service is also reachable by its
+# compose service name.
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
 
 # Application definition
 

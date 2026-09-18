@@ -1,13 +1,16 @@
-FROM node:18-buster
+FROM node:18-bookworm-slim
 
-WORKDIR /client
+ENV NODE_ENV=development
+
+WORKDIR /app
+
+# Install dependencies first so edits to src/ do not invalidate this layer.
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
 
-RUN npm install
-
 EXPOSE 3000
 
-RUN npm i react-scripts
-
+# react-app-rewired start (see package.json scripts)
 CMD ["npm", "start"]

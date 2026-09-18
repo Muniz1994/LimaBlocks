@@ -6,10 +6,14 @@ ifcopenshell==0.8.0
 isodate==0.7.2
 lark==1.2.2
 mathutils==3.3.0
+# Optional trimesh dependency, required by trimesh.path (Path2D.area and the
+# rest of trimesh/path/traversal.py). trimesh imports it lazily, so a missing
+# networkx only fails once geometry is processed.
+networkx==3.5
 numpy==2.1.3
 pyodbc==5.2.0
 python-dateutil==2.9.0.post0
-pywin32==306
+pywin32==306; sys_platform == "win32"
 scipy==1.13.1
 shapely==2.0.6
 six==1.16.0
