@@ -41,8 +41,8 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.t
 
 COPY . .
 
+# Documentation only; the port actually served is BACKEND_PORT (see .env).
 EXPOSE 8000
 
-# settings.py does `from constants import *`, so /app must stay the working
-# directory for the project to import.
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Shell form so BACKEND_PORT is expanded at container start rather than baked in.
+CMD ["sh", "-c", "python manage.py runserver 0.0.0.0:${BACKEND_PORT:-8000}"]

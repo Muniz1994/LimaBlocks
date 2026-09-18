@@ -11,27 +11,91 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from constants import *
 import os
+
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent
 # BASE_DIR = Path(__file__).resolve().parent.parent
 
+# lima-backend/
+PROJECT_DIR = BASE_DIR.parent
+# LimaBlocks/ (repo root, one .env shared with docker compose)
+REPO_DIR = PROJECT_DIR.parent
+
+
+def _load_dotenv():
+    """Read .env files into os.environ for runs outside docker compose.
+
+    Real environment variables always win, so compose's `environment:` and
+    `env_file:` entries are never overwritten by a stale file on a mounted
+    volume. The repo-root .env is read first and the backend-local one after,
+    which means lima-backend/.env can override the shared file.
+    """
+    try:
+        from dotenv import load_dotenv
+    except ImportError:  # python-dotenv not installed: rely on the real env
+        return
+    for candidate in (REPO_DIR / ".env", PROJECT_DIR / ".env"):
+        if candidate.is_file():
+            load_dotenv(candidate, override=False)
+
+
+_load_dotenv()
+
+
+def env(name, default=None):
+    """Environment variable as a string, with empty treated as unset."""
+    value = os.environ.get(name, "")
+    return value.strip() if value.strip() else default
+
+
+def env_bool(name, default=False):
+    value = env(name)
+    if value is None:
+        return default
+    return value.lower() in ("1", "true", "yes", "on")
+
+
+def env_list(name, default=()):
+    value = env(name)
+    if value is None:
+        return list(default)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = DJANGO_SECRET_KEY
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DJANGO_DEBUG", default=True)
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# Never committed: it comes from .env (see .env.example). A throwaway key is
+# generated for DEBUG runs so a fresh clone starts without any setup, but a
+# non-DEBUG run has to be given a real one.
+SECRET_KEY = env("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is off. "
+            "Copy .env.example to .env and fill it in."
+        )
+    from django.core.management.utils import get_random_secret_key
+
+    SECRET_KEY = get_random_secret_key()
 
 # Empty by default, which under DEBUG lets Django serve localhost only.
 # Containers set DJANGO_ALLOWED_HOSTS so the service is also reachable by its
 # compose service name.
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",") if h.strip()]
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
+
+# Public addresses of the two services. The frontend one drives CORS below.
+BACKEND_URL = env("BACKEND_URL", "http://localhost")
+BACKEND_PORT = env("BACKEND_PORT", "8000")
+FRONTEND_URL = env("FRONTEND_URL", "http://localhost")
+FRONTEND_PORT = env("FRONTEND_PORT", "3000")
 
 # Application definition
 
@@ -88,10 +152,23 @@ WSGI_APPLICATION = 'limaBackend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# SQLite by default; DB_ENGINE/DB_USER/DB_PASSWORD in .env switch the project
+# onto a server database without touching this file.
+DB_ENGINE = env("DB_ENGINE", "django.db.backends.sqlite3")
+
+if DB_ENGINE.endswith("sqlite3"):
+    DB_NAME = BASE_DIR / env("DB_NAME", "db.sqlite3")
+else:
+    DB_NAME = env("DB_NAME", "lima")
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': DB_ENGINE,
+        'NAME': DB_NAME,
+        'USER': env("DB_USER", ""),
+        'PASSWORD': env("DB_PASSWORD", ""),
+        'HOST': env("DB_HOST", ""),
+        'PORT': env("DB_PORT", ""),
     }
 }
 
@@ -117,9 +194,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = env("DJANGO_LANGUAGE_CODE", "en-us")
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = env("DJANGO_TIME_ZONE", "UTC")
 
 USE_I18N = True
 
@@ -138,13 +215,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # django-cors-headers
+# The frontend's own origin is always allowed; CORS_ALLOWED_ORIGINS in .env adds
+# any others (comma separated) without having to edit this file.
 
-ORS_ORIGIN_WHITELIST = [FRONTEND_URL + ':' + FRONTEND_PORT]
-
-CORS_ALLOWED_ORIGINS = [
-    FRONTEND_URL + ':' + FRONTEND_PORT,
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(
+    [f"{FRONTEND_URL}:{FRONTEND_PORT}"]
+    + env_list("CORS_ALLOWED_ORIGINS", default=("http://localhost:3000",))
+))
 
 # Rest Framework config
 REST_FRAMEWORK = {
@@ -156,5 +233,7 @@ REST_FRAMEWORK = {
 }
 
 # File storage config
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = env("MEDIA_URL", "/media/")
+# Relative values are resolved against BASE_DIR; an absolute path (a mounted
+# volume, say) is used as given.
+MEDIA_ROOT = os.path.join(BASE_DIR, env("MEDIA_ROOT", "media"))

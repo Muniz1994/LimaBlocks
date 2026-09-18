@@ -1,4 +1,8 @@
 node_modules/
+# Local overrides; the compose file supplies REACT_APP_* at run time.
+.env
+.env.local
+.env.*.local
 build/
 coverage/
 .git/

@@ -1,4 +1,8 @@
 venv/
+# Configuration is injected at run time; never bake secrets into the image.
+.env
+.env.*
+constants.py
 __pycache__/
 **/__pycache__/
 *.py[cod]

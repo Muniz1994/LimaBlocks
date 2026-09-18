@@ -112,7 +112,12 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+# Real configuration stays local; only the templates are committed.
 .env
+.env.local
+.env.*.local
+!.env.example
+!*/.env.example
 .venv
 env/
 venv/

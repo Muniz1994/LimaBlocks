@@ -10,7 +10,9 @@ RUN npm ci
 
 COPY . .
 
+# Documentation only; the port actually served is PORT (FRONTEND_PORT in .env).
 EXPOSE 3000
 
-# react-app-rewired start (see package.json scripts)
+# react-app-rewired start (see package.json scripts); it reads PORT and the
+# REACT_APP_* variables from the environment at startup.
 CMD ["npm", "start"]
