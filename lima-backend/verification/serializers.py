@@ -1,0 +1,16 @@
+from rest_framework import serializers
+from .models import Verification,RuleResult
+
+class RuleResultSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = RuleResult
+        fields = '__all__'
+
+class VerificationSerializer(serializers.ModelSerializer):
+    
+    results = RuleResultSerializer(read_only=True)
+    
+    class Meta:
+        model = Verification
+        fields = '__all__'

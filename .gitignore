@@ -1,0 +1,180 @@
+# Root .gitignore for LimaBlocks
+# Combines the rules from lima-backend/.gitignore (Django/Python)
+# and lima-frontend-js/.gitignore (Create React App / Node).
+
+###############################################################################
+# General / editors / OS
+###############################################################################
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+#.idea/
+
+###############################################################################
+# Python / Django (lima-backend)
+###############################################################################
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+*$py.class
+__pycache__/
+*.pot
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+
+# Django / database
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+
+# Flask stuff
+instance/
+.webassets-cache
+
+# Scrapy stuff
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+# .python-version
+
+# pipenv / poetry / pdm
+#Pipfile.lock
+#poetry.lock
+#pdm.lock
+.pdm.toml
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+backendenv/
+.backendenv
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Backend-specific
+/lima-backend/build/
+/lima-backend/lib/
+/lima-backend/lib64/
+/lima-backend/constants.py
+/lima-backend/.vscode
+/lima-backend/verification/migrations
+
+###############################################################################
+# Node / React (lima-frontend-js)
+###############################################################################
+
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# frontend build / coverage / public
+/lima-frontend-js/build/
+/lima-frontend-js/coverage/
+/lima-frontend-js/public/
