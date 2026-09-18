@@ -22,15 +22,21 @@ class VerificationExecuteView(APIView):
         
     def get(self, request, pk, format=None):
 
-        ''' This is the method responsible to define the response of a GET API call. 
-        We check is the verification requested exists and then we execute it. 
-        The report generated is then given as the reponse'''
-        
+        ''' This is the method responsible to define the response of a GET API call.
+        We check is the verification requested exists and then we execute it.
+
+        The response carries the report alongside the console output of the run:
+
+            {"status": "ok" | "error", "report": [...], "console": "..."}
+
+        A rule that raises gives status "error" and a traceback in "console"
+        rather than a 500, so the interface can show what went wrong.'''
+
         verification = self.get_object(pk)
 
-        report = verification.run_verification()
+        result = verification.run_verification()
 
-        return Response(report)
+        return Response(result)
     
 
 

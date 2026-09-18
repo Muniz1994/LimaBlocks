@@ -1,5 +1,8 @@
+import traceback
+
 from django.db import models
 from digital_regulation.models import Regulation
+from check_engine.console import capture_console
 from check_engine.main import ComplianceCheck
 
 from django.utils import timezone
@@ -31,21 +34,53 @@ class Verification(models.Model):
 
     def run_verification(self):
 
-        '''Execute the compliance check of the attributed IFC model and returns a report'''
+        '''Execute the compliance check of the attributed IFC model.
 
-        check = ComplianceCheck(self.get_ruleset(), self.ifc_file.path)
+        Returns the report together with the console output the run produced,
+        so the Reports view can show what the engine printed - including the
+        traceback of a rule that failed, which used to surface only as a 500
+        the interface had no way to explain.'''
 
-        check.execute()
+        check = None
 
-        self.report = check.report.final_report
+        status = 'ok'
 
-        self.time_executed = timezone.now() # Set the execution time
+        with capture_console() as console:
 
-        self.is_executed = True # Set that the verification was executed
+            try:
 
-        self.save()
+                check = ComplianceCheck(self.get_ruleset(), self.ifc_file.path)
 
-        return self.report
+                check.execute()
+
+            except Exception:
+
+                # Rule code is user authored, so a failure here is feedback for
+                # whoever wrote the rule rather than a server fault. Printing it
+                # puts it in the captured console and still leaves it in the
+                # server log, where it has always been.
+                traceback.print_exc()
+
+                status = 'error'
+
+        # Rules that completed before a failure are still worth reporting.
+        report = check.report.final_report if check else []
+
+        if status == 'ok':
+
+            self.report = report
+
+            self.time_executed = timezone.now() # Set the execution time
+
+            self.is_executed = True # Set that the verification was executed
+
+            self.save()
+
+        return {
+            'status': status,
+            'report': report,
+            'console': console.getvalue(),
+        }
 
     def save(self, *args, **kwargs):
         super(Verification, self).save(*args, **kwargs)

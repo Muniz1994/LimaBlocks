@@ -24,6 +24,7 @@ import { MDBListGroup, MDBTableHead, MDBTableBody, MDBTable, MDBListGroupItem, M
 import { useSelector, useDispatch } from 'react-redux';
 
 import { useExecuteVerificationQuery, useVerificationsQuery } from '../context/SliceAPI';
+import { BackendConsoleModal } from '../components/BackendConsoleModal';
 
 library.add(faCircleInfo, faPlus, faInfo, faSave, faList, faCode, faSection, faCheck, faCircleExclamation, faPlay, faCircleCheck, faCircleXmark);
 
@@ -32,6 +33,24 @@ const getFileName = (url) => {
 const urlObj = new URL(url);
 const pathParts = urlObj.pathname.split('/');
 return pathParts[pathParts.length - 1];
+};
+
+
+// RTK Query reports a failed call either as an HTTP status with the response
+// body attached or as a client side problem; neither reads well on its own.
+const describeRequestError = (error) => {
+
+    if (!error) return 'The request to the backend failed.';
+
+    if (error.status === 'FETCH_ERROR') return `The backend could not be reached: ${error.error}`;
+
+    const body = typeof error.data === 'string' ? error.data : JSON.stringify(error.data);
+
+    // A Django debug page comes back as a whole HTML document; the opening of it
+    // is enough to recognise what happened.
+    const detail = body && body.length > 2000 ? `${body.slice(0, 2000)}\n[...]` : body;
+
+    return `The backend answered ${error.status}.${detail ? `\n\n${detail}` : ''}`;
 };
 
 
@@ -58,7 +77,35 @@ const Reports = () => {
 
     const [activeVerification, setActiveVerification] = useState(null)
 
-    const { data: report, isLoading: isChecking } = useExecuteVerificationQuery(executeVerificationId)
+    const [showConsole, setShowConsole] = useState(false)
+
+    // Whether the console has been opened since the last run, so that a failure
+    // can stop calling for attention once it has actually been looked at.
+    const [consoleSeen, setConsoleSeen] = useState(false)
+
+    const {
+        data: execution,
+        isLoading: isChecking,
+        isError: requestFailed,
+        error: requestErrorDetail,
+    } = useExecuteVerificationQuery(executeVerificationId, { skip: !executeVerificationId })
+
+    // The endpoint used to answer with the bare report array and now wraps it
+    // alongside the console output, so both shapes are accepted.
+    const report = Array.isArray(execution) ? execution : execution?.report
+
+    // Two different ways a run goes wrong: the engine reported a failure, or the
+    // call never got an answer. Both are worth sending the user to the console.
+    const executionFailed = requestFailed || execution?.status === 'error'
+
+    const requestError = requestFailed ? describeRequestError(requestErrorDetail) : null
+
+    // A new run is a new verdict, so it gets the user's attention afresh.
+    useEffect(() => setConsoleSeen(false), [execution, requestErrorDetail])
+
+    const consoleHint = executionFailed ?
+        'The compliance check did not finish - open the backend console' :
+        'Backend console for this run'
 
     const VerificationButton = ({ verificationId }) => {
         return (
@@ -70,6 +117,14 @@ const Reports = () => {
 
     return (
         <>
+
+        <BackendConsoleModal
+            ShowState={showConsole}
+            HideFunction={() => setShowConsole(false)}
+            output={execution?.console}
+            status={execution?.status}
+            requestError={requestError}
+            isRunning={isChecking} />
 
         {/* Page */}
         <Container fluid className='h-100 max-h-100 overflow-hidden'>
@@ -130,7 +185,29 @@ const Reports = () => {
                     <Row>
                         <Col style={{ maxHeight: '60vh', overflowY: 'auto' }}>
                             <Row>
-                                <h6 className='bg-light p-2 border-top border-bottom m-0'>Report:</h6>
+                                <h6 className='bg-light p-2 border-top border-bottom m-0 d-flex align-items-center justify-content-between'>
+                                    <span>Report:</span>
+                                    <button
+                                        type='button'
+                                        className={[
+                                            'backend-console-toggle',
+                                            executionFailed ? 'backend-console-toggle--alert' : '',
+                                            executionFailed && !consoleSeen ? 'backend-console-toggle--pulsing' : '',
+                                        ].filter(Boolean).join(' ')}
+                                        title={consoleHint}
+                                        aria-label={consoleHint}
+                                        onClick={() => {
+                                            setShowConsole(true)
+                                            setConsoleSeen(true)
+                                        }}>
+                                        {executionFailed ?
+                                            <>
+                                                <MDBIcon fas size='sm' icon='circle-exclamation' className='me-1' />
+                                                Check console
+                                            </> :
+                                            <MDBIcon fas size='sm' icon='terminal' />}
+                                    </button>
+                                </h6>
                                 <Col id="report_list" className='px-0'>
                                     <MDBAccordion flush className='px-0'>
                                         {isChecking ? (

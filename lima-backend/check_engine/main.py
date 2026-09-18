@@ -5,6 +5,8 @@ if __name__ != '__main__':
 
 from django.forms.models import model_to_dict
 import ast
+import os
+import time
 
 
 # Dictionary that has some of SECClass codes to be used in the verification of the rules 
@@ -240,6 +242,11 @@ class ComplianceCheck:
         # Creates a new report object to contain the results of the compliance check
         self.report = VerificationRecord()
 
+        # Printed rather than logged: check_engine.console captures stdout so
+        # everything below reaches the Reports view together with whatever the
+        # rule code itself prints.
+        print(f"[engine] loading model: {os.path.basename(_building_path)}")
+
         # Creates the PermitModel object that contains the mapping between IFC concepts and Permit concepts
         self.permit_model = PermitModel(CheckModel(_building_path))
         
@@ -255,15 +262,33 @@ class ComplianceCheck:
             }
 
     def execute(self) -> None:
-        
+
         """ Iterates through every rule in the digital regulation and executes the rule code"""
 
-        for rule in self.rule_set:
+        total = len(self.rule_set)
+
+        print(f"[engine] executing {total} rule(s)")
+
+        for position, rule in enumerate(self.rule_set, start=1):
+
+            print(f"[rule {position}/{total}] {rule.name} ({rule.external_reference})")
+
+            started = time.perf_counter()
 
             self.exec_code(rule.code, self.local_vars)
-            
+
+            # addRef empties checks_executed, so the counts are taken first.
+            recorded = self.report.checks_executed
+            passed = sum(1 for check in recorded if check["result"])
+
+            print(f"[rule {position}/{total}] {len(recorded)} check(s), "
+                  f"{passed} passed, {len(recorded) - passed} failed, "
+                  f"{time.perf_counter() - started:.2f}s")
+
             self.report.addRef(rule.external_reference, rule.name)
-    
+
+        print(f"[engine] finished: {self.report.num_checks_executed} check(s) across {total} rule(s)")
+
 
     def exec_code(self, _code, _local_vars) -> None:
 

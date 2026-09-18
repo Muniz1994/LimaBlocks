@@ -55,6 +55,14 @@ $theme-colors: (
   "themee": $themeE,
 );
 
+// Bootstrap stacks modals at 1055 (backdrop 1050), but the navbar is pinned at
+// 10010 and the xeokit viewer overlays climb to 1000000, so every modal in the
+// app - MDB and react-bootstrap alike - came out partly underneath them. These
+// are declared `!default` in the mdb.free.scss imported further down, so
+// setting them here wins.
+$zindex-modal-backdrop: 1000010;
+$zindex-modal: 1000020;
+
 .active{
   background-color: $themeB !important;
   color: #ffffff !important;
@@ -120,6 +128,75 @@ body {
 .verification-panel {
   z-index: 20000;
   background-color: white;
+}
+
+// Console output of a compliance check, shown in BackendConsoleModal. Wraps
+// rather than scrolls sideways, because the lines worth reading here are long
+// ones: file paths and tracebacks.
+.backend-console {
+  background-color: $gray-900;
+  color: $gray-100;
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: 1rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// A discreet trigger for the console: readable, but not competing with the
+// report it sits next to.
+.backend-console-toggle {
+  border: 0;
+  background: none;
+  color: $gray-600;
+  line-height: 1;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.backend-console-toggle:hover {
+  color: $gray-900;
+}
+
+// When a run fails, the trigger stops being discreet and says what to do: from
+// the report panel alone a failure looks exactly like a check that found
+// nothing, so it has to be the thing that draws the eye.
+.backend-console-toggle--alert,
+.backend-console-toggle--alert:hover {
+  background-color: $red;
+  border-radius: 10rem;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.6rem;
+  text-transform: uppercase;
+}
+
+// Only until the console has been opened - past that the red pill is reminder
+// enough, and a permanent animation just becomes noise.
+.backend-console-toggle--pulsing {
+  animation: backend-console-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes backend-console-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba($red, 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 0 0.35rem rgba($red, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backend-console-toggle--pulsing {
+    animation: none;
+    box-shadow: 0 0 0 0.2rem rgba($red, 0.35);
+  }
 }
 
 #MyNavCubeCanvas {
