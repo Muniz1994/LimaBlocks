@@ -14,7 +14,7 @@ from scipy.spatial import cKDTree
 #  Permit Object Model
 # ------------------------------------------------------------------------------------------------------
 
-room_types = {
+ROOM_TYPES = {
     "vestibulo":"SL_40_65_94",
     "corredor":"SL_90_10_36",
     "instalacaoSanitaria":"SL_35_80",
@@ -116,22 +116,22 @@ class Dwelling(PermitObject):
     # Calculated value
     def habitable_area(self):
         
-        habitable_spaces = [space for space in self.relatedSpaces if space.objectClass not in [room_types["vestibulo"], room_types["corredor"],room_types["instalacaoSanitaria"]]] 
+        habitable_spaces = [space for space in self.relatedSpaces if space.objectClass not in [ROOM_TYPES["vestibulo"], ROOM_TYPES["corredor"],ROOM_TYPES["instalacaoSanitaria"]]] 
         
         return sum([space.area() for space in habitable_spaces])
     
     # Calculated value
     def num_of_bedrooms(self):
         
-       return self.num_of_room_per_class([room_types["quartoCasal"],room_types["quartoSimples"],room_types["quartoDuplo"]])
+       return self.num_of_room_per_class([ROOM_TYPES["quartoCasal"],ROOM_TYPES["quartoSimples"],ROOM_TYPES["quartoDuplo"]])
     
     # Calculated value
     def num_of_kitchens(self):
-        return self.num_of_room_per_class([room_types["cozinha"]])
+        return self.num_of_room_per_class([ROOM_TYPES["cozinha"]])
     
     # Calculated value
     def num_of_living_rooms(self):
-        return self.num_of_room_per_class([room_types["sala"]])
+        return self.num_of_room_per_class([ROOM_TYPES["sala"]])
     
     # Auxiliary method
     def num_of_room_per_class(self, list_of_classes):

@@ -9,21 +9,6 @@ import os
 import time
 
 
-# Dictionary that has some of SECClass codes to be used in the verification of the rules 
-ROOM_TYPES = {
-            "vestibulo":"SL_40_65_94",
-            "corredor":"SL_90_10_36",
-            "instalacaoSanitaria":"SL_35_80",
-            "despensa":"SL_90_50_46",
-            "arrecadacao":"SL_90_50_39",
-            "sala":"SL_45_10_49",
-            "cozinha":"SL_45_10_23",
-            "quartoCasal":"SL_45_10_10",
-            "quartoDuplo":"SL_45_10_11",
-            "quartoSimples":"SL_45_10_07",
-            "varanda":"SL_45_10_06",
-                }
-
 # Main report class 
 class VerificationRecord:
     
