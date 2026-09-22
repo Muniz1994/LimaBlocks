@@ -231,6 +231,23 @@ body {
   opacity: 0.35;
 }
 
+// Keeps the column headings in place while the list of verifications scrolls
+// under them. The border lives in a box-shadow because Bootstrap collapses
+// table borders, and a collapsed border is painted by the table rather than the
+// cell - so it scrolls away from a sticky th and leaves the heading bare.
+.verifications-table {
+  thead th {
+    position: sticky;
+    top: 0;
+    // Above the rows, and above the expanded breakdown's shaded background.
+    z-index: 2;
+    // Opaque: the rows pass directly underneath, and thead's own bg-light is
+    // painted behind the cells rather than in them.
+    background-color: $gray-100;
+    box-shadow: inset 0 1px 0 $gray-300, inset 0 -1px 0 $gray-300;
+  }
+}
+
 #MyNavCubeCanvas {
 
   z-index: 20000;

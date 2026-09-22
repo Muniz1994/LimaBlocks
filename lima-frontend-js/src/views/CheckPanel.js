@@ -17,13 +17,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faCog, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { useVerificationsQuery, useGetIdsReportQuery } from '../context/SliceAPI'
+import { useVerificationsQuery, useGetIdsReportQuery, useDeleteVerificationMutation } from '../context/SliceAPI'
 import { describeRequestError } from '../context/requestError';
 import { NewVerificationModal } from '../components/NewVerificationModal';
 import { AddFileModal } from '../components/AddFileModal';
 import { IdsStatusBadge } from '../components/IdsStatusBadge';
 import { IdsSpecificationList } from '../components/IdsSpecificationList';
 import { IdsReportModal } from '../components/IdsReportModal';
+import { DeleteVerificationModal } from '../components/DeleteVerificationModal';
 
 library.add(faCog, faPlus);
 
@@ -47,6 +48,9 @@ const CheckPanel = () => {
     // Reports.js and keeping the table from growing without bound.
     const [expandedId, setExpandedId] = useState(null);
     const [reportId, setReportId] = useState(null);
+    // The verification awaiting confirmation, kept whole so the modal can name
+    // the model it is about to remove.
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const hideIfcModal = () => setAddIfcModal(false);
 
@@ -65,6 +69,37 @@ const CheckPanel = () => {
         isError: reportFailed,
         error: reportErrorDetail,
     } = useGetIdsReportQuery(reportId, { skip: !reportId });
+
+    const [deleteVerification, {
+        isLoading: isDeleting,
+        error: deleteErrorDetail,
+        reset: resetDelete,
+    }] = useDeleteVerificationMutation();
+
+    const closeDelete = () => {
+        setDeleteTarget(null);
+        // Otherwise a failure stays on screen the next time the modal opens.
+        resetDelete();
+    };
+
+    const confirmDelete = async () => {
+
+        try {
+
+            await deleteVerification(deleteTarget.id).unwrap();
+
+            // The row is gone, so anything still pointed at it has to let go.
+            if (expandedId === deleteTarget.id) setExpandedId(null);
+            if (reportId === deleteTarget.id) setReportId(null);
+
+            closeDelete();
+
+        } catch {
+
+            // Left open on purpose: the modal shows what went wrong and the
+            // verification is still there to try again.
+        }
+    };
 
     const verifications = Verifications || [];
 
@@ -86,6 +121,13 @@ const CheckPanel = () => {
                 detail={idsReport?.ids_detail}
                 isLoading={isLoadingReport}
                 requestError={reportFailed ? describeRequestError(reportErrorDetail) : null} />
+            <DeleteVerificationModal
+                ShowState={Boolean(deleteTarget)}
+                HideFunction={closeDelete}
+                onConfirm={confirmDelete}
+                fileName={deleteTarget?.ifc_file ? getFileName(deleteTarget.ifc_file) : null}
+                isDeleting={isDeleting}
+                requestError={deleteErrorDetail ? describeRequestError(deleteErrorDetail) : null} />
 
             <MDBContainer fluid className='h-100 max-h-100 overflow-hidden px-5 px-xl-3'>
                 <MDBRow className='h-100'>
@@ -110,8 +152,8 @@ const CheckPanel = () => {
                     </MDBCol>
                     {/* Regulation left panel end */}
                     <MDBCol xs={12} xl={10} xxl={10} className="d-flex justify-content-center ">
-                        <div className='d-flex align-items-start flex-fill mt-4' style={{ overflowX: 'auto', maxHeight: '80vh' }}>
-                            <MDBTable align='middle'>
+                        <div className='d-flex align-items-start flex-fill mt-4' style={{ overflow: 'auto', maxHeight: '80vh' }}>
+                            <MDBTable align='middle' className='verifications-table'>
                                 <MDBTableHead className='bg-light p-2 border-top border-bottom'>
                                     <tr>
                                         <th scope='col'>Creation date</th>
@@ -188,16 +230,27 @@ const CheckPanel = () => {
                                                         </td>
 
                                                         <td>
-                                                            <MDBBtn
-                                                                outline
-                                                                color='dark'
-                                                                size='sm'
-                                                                disabled={!verification.ifc_file}
-                                                                title='Verification details'
-                                                                aria-label='Verification details'
-                                                                onClick={() => setReportId(verification.id)}>
-                                                                <MDBIcon fas icon='circle-info' />
-                                                            </MDBBtn>
+                                                            <Stack direction='horizontal' gap={2}>
+                                                                <MDBBtn
+                                                                    outline
+                                                                    color='dark'
+                                                                    size='sm'
+                                                                    disabled={!verification.ifc_file}
+                                                                    title='Verification details'
+                                                                    aria-label='Verification details'
+                                                                    onClick={() => setReportId(verification.id)}>
+                                                                    <MDBIcon fas icon='info-circle' />
+                                                                </MDBBtn>
+                                                                <MDBBtn
+                                                                    outline
+                                                                    color='danger'
+                                                                    size='sm'
+                                                                    title='Delete verification'
+                                                                    aria-label='Delete verification'
+                                                                    onClick={() => setDeleteTarget(verification)}>
+                                                                    <MDBIcon fas icon='trash' />
+                                                                </MDBBtn>
+                                                            </Stack>
                                                         </td>
                                                     </tr>
 

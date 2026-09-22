@@ -188,7 +188,7 @@ const Reports = () => {
                                         }}>
                                         {executionFailed ?
                                             <>
-                                                <MDBIcon fas size='sm' icon='circle-exclamation' className='me-1' />
+                                                <MDBIcon fas size='sm' icon='exclamation-circle' className='me-1' />
                                                 Check console
                                             </> :
                                             <MDBIcon fas size='sm' icon='terminal' />}

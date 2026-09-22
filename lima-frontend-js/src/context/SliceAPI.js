@@ -92,6 +92,13 @@ export const apiSlice = createApi({
             query: verificationID => `verifications/${verificationID}/ids-report/`,
             providesTags: ['Verifications'],
         }),
+        deleteVerification: builder.mutation({
+            query: verificationID => ({
+                url: `verifications/${verificationID}/`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Verifications']
+        }),
     })
 })
 
@@ -105,5 +112,6 @@ export const {
     useGetVerificationQuery,
     useExecuteVerificationQuery,
     useGetIdsReportQuery,
+    useDeleteVerificationMutation,
     useAddNewVerificationMutation, } = apiSlice
 
