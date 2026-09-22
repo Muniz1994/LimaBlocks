@@ -237,3 +237,14 @@ MEDIA_URL = env("MEDIA_URL", "/media/")
 # Relative values are resolved against BASE_DIR; an absolute path (a mounted
 # volume, say) is used as given.
 MEDIA_ROOT = os.path.join(BASE_DIR, env("MEDIA_ROOT", "media"))
+
+# Information requirements config
+# The IDS an uploaded model is checked against when it is attached to a
+# verification. Relative values resolve against PROJECT_DIR - not BASE_DIR,
+# which points at the settings package rather than the repository - so a
+# deployment can swap in its own specifications without touching the code.
+IDS_SPECIFICATIONS_PATH = os.path.join(
+    PROJECT_DIR,
+    env("IDS_SPECIFICATIONS_PATH",
+        os.path.join("verification", "information_requirements",
+                     "LiMABlocks_specifications.ids")))

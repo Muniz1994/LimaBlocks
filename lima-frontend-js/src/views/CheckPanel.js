@@ -9,7 +9,7 @@ import {
     MDBRow,
 } from 'mdb-react-ui-kit';
 
-import { MDBSpinner, MDBBtn, MDBTable, MDBTableHead, MDBTableBody } from 'mdb-react-ui-kit';
+import { MDBSpinner, MDBBtn, MDBIcon, MDBTable, MDBTableHead, MDBTableBody } from 'mdb-react-ui-kit';
 
 
 // Import icons
@@ -17,11 +17,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faCog, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { useVerificationsQuery } from '../context/SliceAPI'
+import { useVerificationsQuery, useGetIdsReportQuery } from '../context/SliceAPI'
+import { describeRequestError } from '../context/requestError';
 import { NewVerificationModal } from '../components/NewVerificationModal';
 import { AddFileModal } from '../components/AddFileModal';
+import { IdsStatusBadge } from '../components/IdsStatusBadge';
+import { IdsSpecificationList } from '../components/IdsSpecificationList';
+import { IdsReportModal } from '../components/IdsReportModal';
 
 library.add(faCog, faPlus);
+
+const TABLE_COLUMNS = 4;
 
 // Extract the filename using URL API
 const getFileName = (url) => {
@@ -37,6 +43,11 @@ const CheckPanel = () => {
     const [addIfcModal, setAddIfcModal] = useState(false);
     const [activeVerificationID, setActiveVerificationID] = useState(null);
 
+    // One open breakdown at a time, matching the accordion idiom used in
+    // Reports.js and keeping the table from growing without bound.
+    const [expandedId, setExpandedId] = useState(null);
+    const [reportId, setReportId] = useState(null);
+
     const hideIfcModal = () => setAddIfcModal(false);
 
     const toggleNewVerificationModal = () => setShowNewVerificationModal(!showNewVerficationModal);
@@ -44,7 +55,18 @@ const CheckPanel = () => {
     const {
         data: Verifications,
         isLoading,
+        isFetching,
     } = useVerificationsQuery();
+
+    // Skipped until a row is chosen, so opening the panel costs nothing extra.
+    const {
+        data: idsReport,
+        isFetching: isLoadingReport,
+        isError: reportFailed,
+        error: reportErrorDetail,
+    } = useGetIdsReportQuery(reportId, { skip: !reportId });
+
+    const verifications = Verifications || [];
 
     return (
         <>
@@ -56,6 +78,14 @@ const CheckPanel = () => {
                 ShowState={addIfcModal}
                 HideFunction={hideIfcModal}
                 verificationId={activeVerificationID} />
+            <IdsReportModal
+                ShowState={Boolean(reportId)}
+                HideFunction={() => setReportId(null)}
+                status={idsReport?.ids_status}
+                summary={idsReport?.ids_summary}
+                detail={idsReport?.ids_detail}
+                isLoading={isLoadingReport}
+                requestError={reportFailed ? describeRequestError(reportErrorDetail) : null} />
 
             <MDBContainer fluid className='h-100 max-h-100 overflow-hidden px-5 px-xl-3'>
                 <MDBRow className='h-100'>
@@ -86,29 +116,103 @@ const CheckPanel = () => {
                                     <tr>
                                         <th scope='col'>Creation date</th>
                                         <th scope='col'>IFC file</th>
+                                        <th scope='col'>Information requirements</th>
                                         <th scope='col'></th>
                                     </tr>
                                 </MDBTableHead>
                                 <MDBTableBody>
-                                    {isLoading ? <MDBSpinner text="Loading..." />
-                                        : Verifications.map(verification =>
-                                            <tr key={verification.id} >
-                                                <td>{verification.time_executed}</td>
-                                                {verification.ifc_file ?
-                                                    <td>{getFileName(verification.ifc_file)}</td> :
-                                                    <td>
-                                                        <MDBBtn
-                                                            color='dark'
-                                                            onClick={() => {
-                                                                setAddIfcModal(true);
-                                                                setActiveVerificationID(verification.id);
-                                                            }}>Add file
-                                                        </MDBBtn>
-                                                    </td>}
+                                    {isLoading ?
+                                        <tr>
+                                            <td colSpan={TABLE_COLUMNS}>
+                                                <MDBSpinner text="Loading..." />
+                                            </td>
+                                        </tr>
+                                        : verifications.map(verification => {
 
-                                                <td><MDBBtn outline color='dark'>info</MDBBtn></td>
-                                            </tr>
-                                        )
+                                            const isExpanded = expandedId === verification.id;
+
+                                            const specifications =
+                                                verification.ids_summary?.specifications || [];
+
+                                            // Right after an upload the list is refetching and the
+                                            // row still carries its pre-check value; saying "not
+                                            // checked yet" there would be wrong for the second it
+                                            // lasts.
+                                            const isChecking = isFetching
+                                                && verification.ifc_file
+                                                && verification.ids_status === 'not_checked';
+
+                                            return (
+                                                <React.Fragment key={verification.id}>
+                                                    <tr>
+                                                        <td>{verification.time_created || verification.time_executed}</td>
+                                                        {verification.ifc_file ?
+                                                            <td>{getFileName(verification.ifc_file)}</td> :
+                                                            <td>
+                                                                <MDBBtn
+                                                                    color='dark'
+                                                                    onClick={() => {
+                                                                        setAddIfcModal(true);
+                                                                        setActiveVerificationID(verification.id);
+                                                                    }}>Add file
+                                                                </MDBBtn>
+                                                            </td>}
+
+                                                        <td>
+                                                            {!verification.ifc_file ?
+                                                                <span className='text-secondary'>—</span> :
+                                                                isChecking ?
+                                                                    <Stack direction='horizontal' gap={2}>
+                                                                        <MDBSpinner grow size='sm' />
+                                                                        <small className='text-secondary'>Checking…</small>
+                                                                    </Stack> :
+                                                                    <Stack direction='horizontal' gap={2}>
+                                                                        <button
+                                                                            type='button'
+                                                                            className='ids-expander'
+                                                                            aria-expanded={isExpanded}
+                                                                            aria-controls={`ids-detail-${verification.id}`}
+                                                                            aria-label={isExpanded ?
+                                                                                'Hide the specification breakdown' :
+                                                                                'Show the specification breakdown'}
+                                                                            disabled={!specifications.length}
+                                                                            onClick={() => setExpandedId(isExpanded ? null : verification.id)}>
+                                                                            <MDBIcon fas icon={isExpanded ? 'angle-down' : 'angle-right'} />
+                                                                        </button>
+                                                                        <IdsStatusBadge status={verification.ids_status} />
+                                                                        {specifications.length > 0 &&
+                                                                            <small className='text-secondary'>
+                                                                                {verification.ids_summary.total_passed}/{verification.ids_summary.total_specifications} specifications passed
+                                                                            </small>}
+                                                                    </Stack>}
+                                                        </td>
+
+                                                        <td>
+                                                            <MDBBtn
+                                                                outline
+                                                                color='dark'
+                                                                size='sm'
+                                                                disabled={!verification.ifc_file}
+                                                                title='Verification details'
+                                                                aria-label='Verification details'
+                                                                onClick={() => setReportId(verification.id)}>
+                                                                <MDBIcon fas icon='circle-info' />
+                                                            </MDBBtn>
+                                                        </td>
+                                                    </tr>
+
+                                                    {isExpanded &&
+                                                        <tr
+                                                            className='ids-detail-row'
+                                                            id={`ids-detail-${verification.id}`}>
+                                                            <td colSpan={TABLE_COLUMNS}>
+                                                                <IdsSpecificationList
+                                                                    specifications={specifications} />
+                                                            </td>
+                                                        </tr>}
+                                                </React.Fragment>
+                                            );
+                                        })
                                     }
                                 </MDBTableBody>
                             </MDBTable>

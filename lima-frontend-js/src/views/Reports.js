@@ -25,6 +25,10 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { useExecuteVerificationQuery, useVerificationsQuery } from '../context/SliceAPI';
 import { BackendConsoleModal } from '../components/BackendConsoleModal';
+// RTK Query reports a failed call either as an HTTP status with the response
+// body attached or as a client side problem; neither reads well on its own.
+// Shared with CheckPanel, which has the same two cases to explain.
+import { describeRequestError } from '../context/requestError';
 
 library.add(faCircleInfo, faPlus, faInfo, faSave, faList, faCode, faSection, faCheck, faCircleExclamation, faPlay, faCircleCheck, faCircleXmark);
 
@@ -33,24 +37,6 @@ const getFileName = (url) => {
 const urlObj = new URL(url);
 const pathParts = urlObj.pathname.split('/');
 return pathParts[pathParts.length - 1];
-};
-
-
-// RTK Query reports a failed call either as an HTTP status with the response
-// body attached or as a client side problem; neither reads well on its own.
-const describeRequestError = (error) => {
-
-    if (!error) return 'The request to the backend failed.';
-
-    if (error.status === 'FETCH_ERROR') return `The backend could not be reached: ${error.error}`;
-
-    const body = typeof error.data === 'string' ? error.data : JSON.stringify(error.data);
-
-    // A Django debug page comes back as a whole HTML document; the opening of it
-    // is enough to recognise what happened.
-    const detail = body && body.length > 2000 ? `${body.slice(0, 2000)}\n[...]` : body;
-
-    return `The backend answered ${error.status}.${detail ? `\n\n${detail}` : ''}`;
 };
 
 

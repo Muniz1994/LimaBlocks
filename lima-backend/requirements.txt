@@ -2,7 +2,14 @@ asgiref==3.8.1
 Django==5.0.6
 django-cors-headers==4.3.1
 djangorestframework==3.15.1
+# xmlschema's XPath engine, pinned because xmlschema requires >=4.4.0,<5.0.0.
+elementpath==4.8.0
 ifcopenshell==0.8.0
+# Checks an uploaded model against the IDS in verification/information_requirements.
+# Pinned to 0.8.0 deliberately: 0.8.5 is a 25 MB wheel bundling a Pyodide webapp and
+# pulls flask/bcf-client/odfpy/pystache, none of which this project calls. 0.8.0 is
+# 26 KB and adds only xmlschema on top of what is already here.
+ifctester==0.8.0
 isodate==0.7.2
 lark==1.2.2
 mathutils==3.3.0
@@ -23,3 +30,5 @@ sqlparse==0.5.0
 trimesh==4.6.12
 typing_extensions==4.12.2
 tzdata==2024.1
+# Parses and validates the IDS XML against its XSD; ifctester's only new dependency.
+xmlschema==3.4.5

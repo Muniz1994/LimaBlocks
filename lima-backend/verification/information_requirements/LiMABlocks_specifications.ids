@@ -1,0 +1,225 @@
+<ids xmlns="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://standards.buildingsmart.org/IDS http://standards.buildingsmart.org/IDS/1.0/ids.xsd">
+    <info>
+        <title>LiMABlocks specifications</title>
+        <version>v0.1.0</version>
+        <description>Alphanumerical specifications for the use of the LiMABlocks prototype</description>
+        <author>eng.brunomuniz@outlook.com</author>
+        <date>2026-01-02</date>
+    </info>
+    <specifications>
+        <specification name="Parcel requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="1" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSPACE</simpleValue>
+                    </name>
+                </entity>
+                <classification>
+                    <value>
+                        <simpleValue>SL_22_10_05</simpleValue>
+                    </value>
+                    <system>
+                        <simpleValue>SECClasS</simpleValue>
+                    </system>
+                </classification>
+            </applicability>
+            <requirements />
+        </specification>
+        <specification name="Building requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="1" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDING</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCTEXT" cardinality="required">
+                    <propertySet>
+                        <simpleValue>PermitCheck</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Uses</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="Hotel" />
+                            <xs:enumeration value="Public Facility" />
+                            <xs:enumeration value="Residence" />
+                            <xs:enumeration value="Services" />
+                        </xs:restriction>
+                    </value>
+                </property>
+                <property dataType="IFCBOOLEAN" cardinality="required">
+                    <propertySet>
+                        <simpleValue>PermitCheck</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>isNewConstruction</simpleValue>
+                    </baseName>
+                </property>
+                <property dataType="IFCTEXT" cardinality="required">
+                    <propertySet>
+                        <simpleValue>PermitCheck</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>Category</simpleValue>
+                    </baseName>
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="Single housing" />
+                            <xs:enumeration value="Family housing" />
+                            <xs:enumeration value="Local acommodation" />
+                        </xs:restriction>
+                    </value>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="Storey requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="1" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCBUILDINGSTOREY</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCLOGICAL" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_BuildingStoreyCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>AboveGround</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="Elevator requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCTRANSPORTELEMENT</simpleValue>
+                    </name>
+                    <predefinedType>
+                        <simpleValue>ELEVATOR</simpleValue>
+                    </predefinedType>
+                </entity>
+            </applicability>
+            <requirements />
+        </specification>
+        <specification name="Front street requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="1" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSPACE</simpleValue>
+                    </name>
+                </entity>
+                <classification>
+                    <value>
+                        <simpleValue>SL_22_10_05</simpleValue>
+                    </value>
+                    <system>
+                        <simpleValue>SECClasS</simpleValue>
+                    </system>
+                </classification>
+            </applicability>
+            <requirements />
+        </specification>
+        <specification name="Stair requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="0" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSTAIR</simpleValue>
+                    </name>
+                </entity>
+            </applicability>
+            <requirements>
+                <property dataType="IFCPOSITIVELENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_StairCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>RiserHeight</simpleValue>
+                    </baseName>
+                </property>
+                <property dataType="IFCPOSITIVELENGTHMEASURE" cardinality="required">
+                    <propertySet>
+                        <simpleValue>Pset_StairCommon</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>TreadLength</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+        <specification name="Dwelling requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="1" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSPACE</simpleValue>
+                    </name>
+                </entity>
+                <classification>
+                    <value>
+                        <simpleValue>SL_22_15</simpleValue>
+                    </value>
+                    <system>
+                        <simpleValue>SECClasS</simpleValue>
+                    </system>
+                </classification>
+            </applicability>
+            <requirements />
+        </specification>
+        <specification name="Room requirements" ifcVersion="IFC4" description="" instructions="">
+            <applicability minOccurs="1" maxOccurs="unbounded">
+                <entity>
+                    <name>
+                        <simpleValue>IFCSPACE</simpleValue>
+                    </name>
+                    <predefinedType>
+                        <simpleValue>USERDEFINED</simpleValue>
+                    </predefinedType>
+                </entity>
+                <attribute>
+                    <name>
+                        <simpleValue>ObjectType</simpleValue>
+                    </name>
+                    <value>
+                        <simpleValue>ROOM</simpleValue>
+                    </value>
+                </attribute>
+            </applicability>
+            <requirements>
+                <classification cardinality="required">
+                    <value>
+                        <xs:restriction base="xs:string">
+                            <xs:enumeration value="SL_40_65_94" />
+                            <xs:enumeration value="SL_90_10_36" />
+                            <xs:enumeration value="SL_35_80" />
+                            <xs:enumeration value="SL_90_50_46" />
+                            <xs:enumeration value="SL_90_50_39" />
+                            <xs:enumeration value="SL_45_10_49" />
+                            <xs:enumeration value="SL_45_10_23" />
+                            <xs:enumeration value="SL_45_10_10" />
+                            <xs:enumeration value="SL_45_10_11" />
+                            <xs:enumeration value="SL_45_10_07" />
+                            <xs:enumeration value="SL_45_10_06" />
+                            <xs:enumeration value="SL_45_10_44" />
+                        </xs:restriction>
+                    </value>
+                    <system>
+                        <simpleValue>SECClasS</simpleValue>
+                    </system>
+                </classification>
+                <property cardinality="required">
+                    <propertySet>
+                        <simpleValue>PermitCheck</simpleValue>
+                    </propertySet>
+                    <baseName>
+                        <simpleValue>AssociatedDwelling</simpleValue>
+                    </baseName>
+                </property>
+            </requirements>
+        </specification>
+    </specifications>
+</ids>

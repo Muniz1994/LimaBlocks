@@ -3,7 +3,7 @@ from .models import Verification
 
 # Verification models registration into admin
 class VerificationAdmin(admin.ModelAdmin):
-    list_display = ['time_executed','ifc_file']
+    list_display = ['time_executed','ifc_file','ids_status']
 
 
 admin.site.register(Verification, VerificationAdmin)

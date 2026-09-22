@@ -5,7 +5,10 @@ export const apiSlice = createApi({
     reducerPath: 'api',
     // The API root
     baseQuery: fetchBaseQuery({ baseUrl: process.env.REACT_APP_API_ROOT }),
-    tagTypes: ['Regulations', 'Rules', 'Projects'],
+    // 'Verifications' has to be declared here or RTK Query silently drops the
+    // providesTags/invalidatesTags pair on the verification endpoints - which is
+    // what used to stop the table refreshing after a model was uploaded.
+    tagTypes: ['Regulations', 'Rules', 'Projects', 'Verifications'],
     // The "endpoints" represent operations and requests for this server
     endpoints: builder => ({
         //-----------------------------------------------------------------------------------------------------------------------
@@ -82,6 +85,13 @@ export const apiSlice = createApi({
         executeVerification: builder.query({
             query: verificationID => `executeverification/${verificationID}/`
         }),
+        // The full IDS result for one verification. Kept out of the list
+        // response because the failing elements make it far too heavy to send
+        // for every row.
+        getIdsReport: builder.query({
+            query: verificationID => `verifications/${verificationID}/ids-report/`,
+            providesTags: ['Verifications'],
+        }),
     })
 })
 
@@ -94,5 +104,6 @@ export const {
     useVerificationsQuery,
     useGetVerificationQuery,
     useExecuteVerificationQuery,
+    useGetIdsReportQuery,
     useAddNewVerificationMutation, } = apiSlice
 

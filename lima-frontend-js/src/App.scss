@@ -199,6 +199,38 @@ body {
   }
 }
 
+// MDB's warning badge is yellow, which reads as "nearly fine". The state it has
+// to carry - every obligatory specification met, an optional one not - deserves
+// the clearer orange the palette already defines.
+.ids-badge--optional {
+  background-color: $orange !important;
+  color: $gray-900;
+}
+
+// The specification breakdown belongs to the row it opened from, not to the
+// list of verifications around it.
+.ids-detail-row > td {
+  background-color: $gray-100;
+  border-top: 0;
+  padding: 0.75rem 1.5rem;
+}
+
+.ids-expander {
+  background: none;
+  border: 0;
+  color: $gray-600;
+  line-height: 1;
+  padding: 0 0.4rem 0 0;
+}
+
+.ids-expander:hover:not(:disabled) {
+  color: $gray-900;
+}
+
+.ids-expander:disabled {
+  opacity: 0.35;
+}
+
 #MyNavCubeCanvas {
 
   z-index: 20000;

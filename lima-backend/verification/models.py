@@ -5,6 +5,8 @@ from digital_regulation.models import Regulation
 from check_engine.console import capture_console
 from check_engine.main import ComplianceCheck
 
+from . import ids_check
+
 from django.utils import timezone
 
 # Verification Models
@@ -17,6 +19,17 @@ class Verification(models.Model):
     xkt_file = models.FileField(upload_to='xkt_files/', blank=True)
     report = models.CharField(max_length=200, default='', blank=True)
     regulations = models.ManyToManyField(Regulation, blank=True)
+
+    # Whether the attached model carries the information the rules need, checked
+    # against the IDS when the file arrives rather than when a rule is run.
+    ids_status = models.CharField(max_length=20, default=ids_check.NOT_CHECKED, blank=True)
+    ids_checked_at = models.DateTimeField(null=True, blank=True, default=None)
+    # Counts only - small enough to travel with the verification list, which is
+    # what the CheckPanel table renders from.
+    ids_summary = models.JSONField(default=dict, blank=True)
+    # The applicability and requirement sentences and the failing elements.
+    # Served on demand by the ids-report action so the list stays cheap.
+    ids_detail = models.JSONField(default=dict, blank=True)
 
     def get_ruleset(self):
 
@@ -81,6 +94,37 @@ class Verification(models.Model):
             'report': report,
             'console': console.getvalue(),
         }
+
+    def run_ids_check(self):
+
+        '''Check the attached model against the information requirements and store the verdict.
+
+        Deliberately separate from run_verification: this asks whether the model
+        carries the data the rules need, and it is answered when the file arrives
+        rather than when a compliance check is requested.'''
+
+        if not self.ifc_file:
+
+            result = {'status': ids_check.NOT_CHECKED, 'summary': {}, 'detail': {}}
+
+        else:
+
+            result = ids_check.check_ifc_against_ids(self.ifc_file.path)
+
+        self.ids_status = result['status']
+
+        self.ids_summary = result['summary']
+
+        self.ids_detail = result['detail']
+
+        self.ids_checked_at = timezone.now()
+
+        # update_fields so this cannot clobber a concurrent run_verification()
+        # writing report/is_executed on the same row.
+        self.save(update_fields=[
+            'ids_status', 'ids_summary', 'ids_detail', 'ids_checked_at'])
+
+        return result
 
     def save(self, *args, **kwargs):
         super(Verification, self).save(*args, **kwargs)
