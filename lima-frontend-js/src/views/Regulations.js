@@ -15,12 +15,23 @@ import { NewRegulationModal } from '../components/NewRegulationModal';
 import { NewClauseModal } from '../components/NewClauseModal';
 import { InfoRegulationModal } from '../components/InfoRegulationModal';
 import { ClauseListModal } from '../components/ClauseListModal';
+import { DeleteRegulationModal } from '../components/DeleteRegulationModal';
 
 import { useSelector, useDispatch } from 'react-redux'
 
 import { setRegulationList } from '../context/regulationSlice';
 import { setActiveRegulation } from '../context/activeRegulationSlice';
 import { setActiveClause } from '../context/activeClauseSlice';
+import { describeRequestError } from '../context/requestError';
+
+const NO_REGULATION = { id: '', name: '' };
+const NO_CLAUSE = { id: '', name: '', text: '', code: '', has_code: false };
+
+// describeRequestError reads RTK Query errors; this view still talks to the
+// backend through axios, so its failures are reshaped to match.
+const toRequestError = (err) => err.response ?
+    { status: err.response.status, data: err.response.data } :
+    { status: 'FETCH_ERROR', error: err.message };
 
 
 // Choose the existing regulations in a dropdown
@@ -47,6 +58,11 @@ const Regulations = () => {
     const [newClauseModalShow, setNewClauseModalShow] = useState(false);
     const [clauseListModalShow, setClauseListModalShow] = useState(false);
     const [showCode, setShowCode] = useState(false);
+
+    // What is awaiting confirmation: { kind: 'regulation' | 'clause', id, name, ruleCount }
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
 
     // Controls the state of the block editor
     const [blockXml, setBlockXml] = useState('<xml xmlns="http://www.w3.org/1999/xhtml"><block type="text" x="70" y="30"><field name="TEXT"></field></block></xml>');
@@ -121,6 +137,57 @@ const Regulations = () => {
     };
 
 
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // Delete regulation or clause
+    //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    const activeRegulationRules = regulations_list.find(reg => reg.id === activeRegulation.id)?.rules || [];
+
+    const closeDelete = () => {
+        setDeleteTarget(null);
+        // Otherwise a failure stays on screen the next time the modal opens.
+        setDeleteError(null);
+    };
+
+    function confirmDelete() {
+
+        const isRegulation = deleteTarget.kind === 'regulation';
+        const endpoint = isRegulation ? 'regulations/' : 'rules/';
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        // TODO: change to RTK
+        axios.delete(process.env.REACT_APP_API_ROOT + endpoint + deleteTarget.id + '/')
+            .then(() => {
+
+                // Anything still pointed at what was removed has to let go, or
+                // the editor would keep offering to save into a missing rule.
+                const clauseGone = isRegulation ?
+                    activeRegulationRules.some(rule => rule.id === activeClause.id) :
+                    activeClause.id === deleteTarget.id;
+
+                if (clauseGone) {
+                    dispatch(setActiveClause(NO_CLAUSE));
+                    setEditorKey(Math.random());
+                }
+
+                if (isRegulation) {
+                    dispatch(setActiveRegulation(NO_REGULATION));
+                    setUpdatedRegulations({ deleted: deleteTarget.id });
+                } else {
+                    setUpdatedClause({ deleted: deleteTarget.id });
+                }
+
+                closeDelete();
+            })
+            // Left open on purpose: the modal shows what went wrong and the
+            // item is still there to try again.
+            .catch(err => setDeleteError(describeRequestError(toRequestError(err))))
+            .finally(() => setIsDeleting(false));
+    };
+
+
     return (
         <>
                 <>
@@ -150,6 +217,15 @@ const Regulations = () => {
                         setUpdatedClause={setUpdatedClause}
                         ShowState={newClauseModalShow}
                         HideFunction={() => setNewClauseModalShow(false)} />
+                    <DeleteRegulationModal
+                        ShowState={Boolean(deleteTarget)}
+                        HideFunction={closeDelete}
+                        onConfirm={confirmDelete}
+                        kind={deleteTarget?.kind}
+                        name={deleteTarget?.name}
+                        ruleCount={deleteTarget?.ruleCount}
+                        isDeleting={isDeleting}
+                        requestError={deleteError} />
 
 
                     {/* Page */}
@@ -209,19 +285,40 @@ const Regulations = () => {
                                 <MDBRow className=' p-0'>
                                     <MDBCol>
                                         <MDBRow>
-                                        { /* Show the active regulation name */}
+                                            <Stack
+                                            className='d-flex bg-light p-2 border-top border-bottom'
+                                            direction='horizontal' gap={2}>
+                                                { /* Show the active regulation name */}
                                             {activeRegulation.name !== '' &&
                                                 <>
-                                                    <h6 className='bg-light p-2 border-top border-bottom'>{activeRegulation.name}<MDBBtn
+                                                    <h6 >{activeRegulation.name}</h6>
+                                                        
+                                                        <MDBBtn
                                                         className='mx-2'
                                                         color='light'
                                                         size='sm'
                                                         onClick={() => setInfoRegulationModalShow(true)}>
                                                         <MDBIcon fas icon="info-circle" />
-                                                    </MDBBtn></h6>
+                                                    </MDBBtn><MDBBtn
+                                                        outline
+                                                        className='ms-auto'
+                                                        color='dark'
+                                                        size='sm'
+                                                        title='Delete regulation'
+                                                        aria-label='Delete regulation'
+                                                        onClick={() => setDeleteTarget({
+                                                            kind: 'regulation',
+                                                            id: activeRegulation.id,
+                                                            name: activeRegulation.name,
+                                                            ruleCount: activeRegulationRules.length,
+                                                        })}>
+                                                        <MDBIcon fas icon="trash" />
+                                                    </MDBBtn>
 
                                                 </>
                                             }
+
+                                            </Stack>
                                         </MDBRow>
                                         <MDBRow id="clause-list">
                                             <MDBCol className='border-top border-bottom p-0' >
@@ -323,7 +420,24 @@ const Regulations = () => {
                                                         <span className='p-2'>Save rule</span>
                                                         <MDBIcon far icon="save" />
                                                     </MDBBtn>
-                                                    {activeClause.blocks !== '' ? isClauseCodeUpdated ? <Stack className="text-success" direction='horizontal' gap={1}>
+                                                   
+
+                                                    {activeClause.id !== '' &&
+                                                        <MDBBtn
+                                                            outline
+                                                            color='dark'
+                                                            size='sm'
+                                                            onClick={() => setDeleteTarget({
+                                                                kind: 'clause',
+                                                                id: activeClause.id,
+                                                                name: activeClause.name,
+                                                            })}
+                                                        >
+                                                            {/* <span className='p-2'>Delete rule</span> */}
+                                                            <MDBIcon fas icon="trash" />
+                                                        </MDBBtn>}
+
+                                                         {activeClause.blocks !== '' ? isClauseCodeUpdated ? <Stack className="text-success" direction='horizontal' gap={1}>
                                                         <span className='small'>Updated</span>
                                                         <MDBIcon fas icon="check" />
                                                     </Stack> :
