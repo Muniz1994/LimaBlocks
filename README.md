@@ -10,7 +10,7 @@ blocks generate Python, which a backend checking engine runs against an IFC
 model to produce a compliance report.
 
 <p align="center">
-  <img src="media/usage.gif" alt="Usage" width="800">
+  <img src="assets/usage.gif" alt="Usage" width="800">
 </p>
 
 
@@ -19,6 +19,7 @@ that are closed and hard to adapt, and that existing visual languages for
 permit checking are conceptual or proprietary. LimaBlocks explores an open
 alternative in which permit concepts are defined once in a domain model and
 rules are composed from blocks on top of them.
+
 
 ### Key ideas
 
