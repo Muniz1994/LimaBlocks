@@ -1,10 +1,5 @@
 # LimaBlocks
 
-# LimaBlocks
-
-Django REST backend (`lima-backend`) and Create React App frontend
-(`lima-frontend-js`), run together with Docker Compose.
-
 ## About
 
 LimaBlocks (LiMA Blocks) is an open-source web application prototype for checking
