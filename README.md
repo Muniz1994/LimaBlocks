@@ -1,4 +1,4 @@
-# LimaBlocks
+<img src="lima-frontend-js/src/assets/result.svg" width="256">
 
 ## About
 
