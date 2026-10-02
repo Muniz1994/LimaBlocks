@@ -1,214 +1,144 @@
 <img src="lima-frontend-js/src/assets/result.svg" width="256">
 
-## About
+# LimaBlocks
 
-LimaBlocks (LiMA Blocks) is an open-source web application prototype for checking
-Building Information Models (IFC) against building permit regulations. Rules
-are created in the browser with a **block-based visual programming language**
-(built on Google Blockly), using local permit terminology instead of code. The
-blocks generate Python, which a backend checking engine runs against an IFC
-model to produce a compliance report.
+LimaBlocks (LiMA Blocks) is an open-source web application for checking
+Building Information Models (IFC) against building permit regulations. You
+build rules in the browser by snapping together visual blocks (based on Google
+Blockly) that use permit terms such as *Parcel*, *Building*, *Storey* or
+*Stair*, so you don't need to write code. LimaBlocks then runs those rules
+against an IFC model and produces a compliance report.
 
 <p align="center">
   <img src="assets/usage.gif" alt="Usage" width="800">
 </p>
 
-
-The motivation is that existing compliance checkers rely on hard-coded rules
-that are closed and hard to adapt, and that existing visual languages for
-permit checking are conceptual or proprietary. LimaBlocks explores an open
-alternative in which permit concepts are defined once in a domain model and
-rules are composed from blocks on top of them.
-
-
-### Key ideas
-
-- **Visual rule authoring.** Rules are assembled from blocks that use local
-  permit terms, with an editor that also shows the generated Python.
-- **Domain model.** Local permit concepts (for example *Parcel*, *Building*,
-  *Storey*, *Stair*) are implemented as Python classes and mapped to the IFC
-  data model. Mapping strategies are native IFC properties, custom properties,
-  classification codes, geometric processing and attributes. Geometric
-  processing derives values such as building height, depth or area from the
-  geometry, which reduces the number of properties that must be filled in
-  manually.
-- **Separation of concepts and rules.** New concepts require work on the
-  domain model. New rules over existing concepts only require composing blocks.
-- **Open technology.** Open-source tools and open formats are used throughout,
-  so the whole chain, from rule to result, can be inspected.
-
-## How it works
-
-### Block categories
-
-| Category | Purpose |
-| --- | --- |
-| Model | Entities and properties of the domain model. Entity blocks loop over all elements of their type. |
-| Logic | Conditions and operators (`if` / `else if`), used to filter loops and build checks. |
-| Check | `Check` for mandatory conditions with a pass/fail result. `Alert` for conditions that need a subjective analysis when not met. |
-| Value | Numerical, textual or categorical values. |
-| Math | Arithmetic operations and counting functions. |
-
-### Architecture
-
-- **Frontend** (`lima-frontend-js`): React and Blockly. It holds the rule
-  editor, the IFC model viewer and the report views.
-- **Backend** (`lima-backend`): Django and a REST API, with SQLite as the
-  default database (replaceable, as is usual in Django). It holds the checking
-  engine and the domain model.
-- **Checking library (`CHECKIFC`)**: loads the IFC model with IfcOpenShell and
-  builds meshes with Trimesh, so that elements can be selected and measured.
-- **Exchange format**: rules, regulations and reports are serialised as JSON. A
-  *regulation* is a set of machine-readable rules with metadata that link it to
-  the legal text. Each rule stores its generated Python code and the XML of its
-  blocks, so it can be reopened and edited in the editor.
-
-### Workflow
-
-1. **Create rules.** In the editor, assemble blocks, save the rule and group
-   rules into a regulation.
-2. **Prepare the IFC model.** The model must follow the application's
-   information requirements, since the domain model reads its properties,
-   classifications and geometry.
-3. **Create a verification.** In the *Checking* panel, load the IFC file and
-   associate it with one or more regulations.
-4. **Execute.** On the compliance check page, run the verification. The backend
-   runs each rule's code and collects every atomic check (subject, attribute or
-   method, comparison, object) into the report.
-5. **Inspect the report.** Results appear in the report panel, and some
-   verified elements are highlighted in the viewer.
-
 The interface is available in English and Portuguese.
 
-## Scope
+## Installation
 
-- **Jurisdiction:** Portuguese building permits. The domain model, the rules
-  and the use case are based on the national regulation (RGEU) and on the
-  municipal plans (PDM) of Vila Nova de Gaia and Lisbon.
-- **Implemented rules:** nine clauses from these documents, chosen to cover
-  national and municipal scope, text and tabular requirements, and values taken
-  from properties, classification and geometry. They represent *types* of
-  requirement. They are not a statistical sample of the regulatory framework.
-- **Evaluation:** technical only. For three presented rules, run on a model
-  based on a real design (10 floors, 20 dwellings), the outcomes agreed with
-  independent measurement in a separate viewer. The dwelling areas were
-  identical in both tools.
-- **Not an overall solution.** LimaBlocks does not interpret regulatory text
-  automatically and does not aim to automate every permit check. It provides a
-  way to author and run rules that were already interpreted by people.
+### Requirements
 
-## Limitations
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker
+  Engine with the Compose plugin on Linux)
 
-- **No user evaluation.** Whether municipal technicians can create and maintain
-  rules with the visual language has not been tested.
-- **No coverage analysis.** It is not known which share of a regulatory corpus
-  can be expressed with the existing blocks and domain model.
-- **Portuguese concepts only.** Transfer to other jurisdictions is expected from
-  the modular design but has not been demonstrated.
-- **New concepts need development work.** Extending the domain model requires
-  Python development and a multidisciplinary team (programming, BIM and permit
-  experts).
-- **Model preparation.** IFC models must follow the information requirements.
-  Classification coverage is also limited. For example, some room types named in
-  the regulations are missing from the Portuguese SECClasS system, so custom
-  codes were created.
-- **Geometry processing.** The number of ways geometry can be represented in
-  IFC makes robust algorithms hard to write. Quantities such as area, height and
-  depth depend on how the model was authored.
-- **Viewer.** Some measurements, such as areas, are not yet shown graphically in
-  the viewer.
-- **Rule execution.** Rule code is generated from blocks and run on the server
-  in a separate environment. This sandboxing has not been formally evaluated, so
-  do not expose an instance to untrusted users without a security review.
-- **Prototype status.** The default SQLite database and development settings
-  are intended for research and demonstration, not production use.
+### 1. Get the code
 
-## Future work
+```sh
+git clone https://github.com/Muniz1994/LimaBlocks.git
+cd LimaBlocks
+```
 
-- An evaluation with municipal technicians on the usability of the visual
-  language.
-- A coverage analysis over a bounded regulatory corpus. Each verifiable clause
-  would be classified as expressible with the existing blocks, as requiring a new
-  concept in the domain model, or as outside the scope of semantic and geometric
-  checking.
-- Adapting the domain model to another jurisdiction, to assess transferability.
-- More domain model concepts, mappings and geometry processing methods.
-- Showing more verified quantities, such as areas, in the viewer.
-
-## Contributing
-
-Issues and pull requests are welcome. Please open an issue first to discuss
-substantial changes, especially to the domain model or the block vocabulary.
-
-## Licence
-
-See [`LICENSE`](LICENSE).
-
-
-Django REST backend (`lima-backend`) and Create React App frontend
-(`lima-frontend-js`), run together with Docker Compose.
-
-## Configuration
-
-All ports, hostnames, credentials and secrets live in a **`.env` file at the
-repo root**. Nothing configurable is hardcoded in `settings.py`,
-`docker-compose.yml` or the Dockerfiles.
+### 2. Create the configuration file
 
 ```sh
 cp .env.example .env
-# then edit .env — at minimum set DJANGO_SECRET_KEY
 ```
 
-`.env` is git-ignored. `.env.example` is the committed reference and documents
-every variable together with its default.
+On Windows (PowerShell) use `Copy-Item .env.example .env`.
 
-Three consumers read the same file:
+For running on your own computer the default values work, so you don't need to
+edit anything.
 
-| Consumer | How it reads `.env` |
-| --- | --- |
-| Docker Compose | automatically, both for `${VAR}` substitution in `docker-compose.yml` and via `env_file:` for the `api` container |
-| Django | `limaBackend/settings.py` loads it with `python-dotenv`, so `python manage.py …` outside Docker sees the same values |
-| React dev server | Compose passes `REACT_APP_*` and `PORT` into the `web` container |
+### 3. Start the application
 
-Real environment variables always win over the file, so
-`DJANGO_SECRET_KEY=… docker compose up` or a CI secret store overrides it
-without any code change.
-
-### Changing a port
-
-Set `BACKEND_PORT` / `FRONTEND_PORT` in `.env`. Each one drives the container's
-listening port, the published host port, the healthcheck and the CORS origin at
-the same time — there is no second place to update.
-
-### Running the frontend outside Docker
-
-`npm start` only reads a `.env` in `lima-frontend-js/`, not the repo root, so
-that folder has its own template:
-
-```sh
-cd lima-frontend-js
-cp .env.example .env
-npm start
-```
-
-Keep its values in sync with the root file. Note that **only `REACT_APP_*`
-names reach the browser bundle, and they ship in cleartext** — never put a
-secret in one.
-
-## Running
+Make sure Docker Desktop is running, then:
 
 ```sh
 docker compose up --build
 ```
 
-- frontend: `http://localhost:3000` (`FRONTEND_PORT`)
-- API: `http://localhost:8000/api/` (`BACKEND_PORT`)
+The first start takes several minutes while Docker downloads and builds
+everything. It is ready when the log shows the frontend has compiled.
 
-## Secrets
+### 4. Open it
 
-- `.env`, `.env.local` and `.env.*.local` are git-ignored, and both
-  `.dockerignore` files exclude them so nothing is baked into an image.
-- `DJANGO_SECRET_KEY` is required whenever `DJANGO_DEBUG` is off; under DEBUG a
-  throwaway key is generated per process so a fresh clone starts with no setup.
-- Wrap values containing `$` in single quotes — otherwise Compose and
-  python-dotenv both read them as variable references.
+Go to **http://localhost:3000** in your browser.
+
+To stop the application, press `Ctrl+C` in the terminal, or run
+`docker compose down`. Next time, `docker compose up` is enough. Your rules,
+regulations and uploaded models are kept between runs.
+
+## Using LimaBlocks
+
+1. **Create rules.** Open the rule editor, drag blocks into the workspace and
+   save the rule. Group related rules into a *regulation*. The editor also
+   shows the Python code that each rule generates.
+2. **Prepare the IFC model.** The model must contain the properties,
+   classifications and geometry that the rules read. When you upload a model,
+   LimaBlocks checks it against these information requirements and tells you
+   what is missing.
+3. **Create a verification.** In the *Checking* panel, upload the IFC file and
+   choose one or more regulations to check it against.
+4. **Run the check.** On the compliance check page, run the verification.
+5. **Read the report.** Results are listed in the report panel, and some of the
+   checked elements are highlighted in the 3D viewer.
+
+Sample IFC models to try it with are in
+[`lima-backend/check_engine/CHECKIFC/TestFile`](lima-backend/check_engine/CHECKIFC/TestFile).
+
+### Block categories
+
+| Category | Purpose |
+| --- | --- |
+| Model | Building elements and their properties. An element block goes through every element of that type. |
+| Logic | Conditions (`if` / `else if`) used to filter elements and build checks. |
+| Check | `Check` for mandatory conditions with a pass/fail result. `Alert` for conditions that need a person to review them when not met. |
+| Value | Numbers, text or categories. |
+| Math | Arithmetic and counting. |
+
+## Troubleshooting
+
+- **A port is already in use.** Change `FRONTEND_PORT` or `BACKEND_PORT` in
+  `.env`. If you change `BACKEND_PORT`, also update the port in
+  `REACT_APP_API_ROOT`. Then run `docker compose up` again.
+- **The page loads but shows no data or network errors.** Check that the `api`
+  container is running (`docker compose ps`) and that
+  http://localhost:8000/api/ opens in the browser.
+- **Changes to `.env` have no effect.** Restart with `docker compose down`
+  followed by `docker compose up`.
+
+## Scope
+
+LimaBlocks is a research prototype for Portuguese building permits. Its
+building concepts and sample rules are based on the national building
+regulation (RGEU) and on the municipal plans (PDM) of Vila Nova de Gaia and
+Lisbon. It does not interpret regulatory text automatically. It is a tool for
+writing and running rules that people have already interpreted.
+
+## Limitations
+
+- **Not tested with users.** It has not yet been tested whether municipal
+  technicians can create and maintain rules with the blocks.
+- **Unknown coverage.** It is not known what share of a full set of regulations
+  can be expressed with the existing blocks and building concepts.
+- **Portuguese concepts only.** The design should allow adapting it to other
+  countries, but this has not been demonstrated.
+- **New concepts need developers.** Adding a new building concept requires
+  Python development and a team that combines programming, BIM and permit
+  expertise. New rules that use existing concepts only require blocks.
+- **Models must be prepared.** IFC models must follow the information
+  requirements. Classification is also incomplete: some room types named in the
+  regulations are missing from the Portuguese SECClasS system, so custom codes
+  were created for them.
+- **Geometry depends on how the model was made.** IFC allows geometry to be
+  represented in many ways, so measurements such as area, height and depth
+  depend on how the model was authored.
+- **Viewer.** Some measurements, such as areas, are not yet shown in the 3D
+  viewer.
+- **Rules run as code on the server.** The blocks generate Python that runs in a
+  separate environment on the server. This isolation has not been formally
+  evaluated, so do not expose an instance to untrusted users without a security
+  review.
+- **Not for production.** The default database and settings are meant for
+  research and demonstration.
+
+## Contributing
+
+Issues and pull requests are welcome. Please open an issue first to discuss
+substantial changes, especially to the building concepts or the blocks.
+
+## Licence
+
+See [`LICENSE`](LICENSE).
