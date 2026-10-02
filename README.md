@@ -9,6 +9,11 @@ are created in the browser with a **block-based visual programming language**
 blocks generate Python, which a backend checking engine runs against an IFC
 model to produce a compliance report.
 
+<p align="center">
+  <img src="media/usage.gif" alt="Usage" width="800">
+</p>
+
+
 The motivation is that existing compliance checkers rely on hard-coded rules
 that are closed and hard to adapt, and that existing visual languages for
 permit checking are conceptual or proprietary. LimaBlocks explores an open
